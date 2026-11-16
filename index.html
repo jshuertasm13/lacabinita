@@ -227,6 +227,27 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
       </fieldset>
 
       <fieldset>
+        <legend>Tiempo entre fotos</legend>
+        <div class="chips" id="gaps">
+          <button class="chip" type="button" data-v="3" aria-pressed="false">3 segundos</button>
+          <button class="chip" type="button" data-v="5" aria-pressed="true">5 segundos</button>
+          <button class="chip" type="button" data-v="8" aria-pressed="false">8 segundos</button>
+        </div>
+        <p class="note">Después de cada foto sale "¡Cambien de pose!" y vuelve a contar ese tiempo.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Sonido</legend>
+        <div class="chips" id="sounds">
+          <button class="chip" type="button" data-v="voz" aria-pressed="true">Voz</button>
+          <button class="chip" type="button" data-v="pitidos" aria-pressed="false">Pitidos</button>
+          <button class="chip" type="button" data-v="no" aria-pressed="false">Silencio</button>
+        </div>
+        <p class="note">Voz: dice "¿Listos?" y cuenta en español. Sube el volumen del equipo y quita el modo silencio.</p>
+        <button class="btn small" id="soundTest" type="button" style="margin-top:8px">Probar sonido</button>
+      </fieldset>
+
+      <fieldset>
         <legend>Cámara</legend>
         <div class="chips" id="cams">
           <button class="chip" type="button" data-v="user" aria-pressed="true">Frontal</button>
@@ -343,11 +364,11 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
     finde:   { caption: "Feliz " + NEXT_YEAR, sub: "Fin de año", font: "divertida", frame: "#1F2A44" },
     cumple:  { caption: "Feliz cumpleaños", sub: TODAY, font: "divertida", frame: "#FF8FB1" }
   };
-  var FIELDS = ["name", "format", "event", "template", "caption", "sub", "font", "frame", "filter", "copies", "timer", "cam"];
+  var FIELDS = ["name", "format", "event", "template", "caption", "sub", "font", "frame", "filter", "copies", "timer", "cam", "gap", "sound"];
 
   function defaults(ev) {
     var e = EVENTS[ev] || EVENTS.boda;
-    return { name: EVENT_NAMES[ev] || "Proyecto nuevo", format: "tira", event: ev, template: ev + "-1", caption: e.caption, sub: e.sub, font: e.font, frame: e.frame, filter: "color", copies: "2", timer: "3", cam: "user" };
+    return { name: EVENT_NAMES[ev] || "Proyecto nuevo", format: "tira", event: ev, template: ev + "-1", caption: e.caption, sub: e.sub, font: e.font, frame: e.frame, filter: "color", copies: "2", timer: "3", cam: "user", gap: "5", sound: "voz" };
   }
   function clean(p) {
     var d = defaults(EVENTS[p && p.event] ? p.event : "boda"), o = {};
@@ -357,6 +378,8 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
     if (!LAYOUTS[o.format]) o.format = "tira";
     if (["3", "5", "10"].indexOf(o.timer) < 0) o.timer = "3";
     if (o.cam !== "environment") o.cam = "user";
+    if (["3", "5", "8"].indexOf(o.gap) < 0) o.gap = "5";
+    if (["voz", "pitidos", "no"].indexOf(o.sound) < 0) o.sound = "voz";
     return o;
   }
 
@@ -505,7 +528,7 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
     $("pick").hidden = ne < 0;
     $("frameSet").hidden = !!cur.template;
     if (!stripImg.hidden) { stripImg.hidden = true; canvas.hidden = false; $("hint").textContent = "Toca un recuadro para tomar o repetir esa foto."; }
-    press("filters", cur.filter); press("frames", cur.frame); press("fonts", cur.font); press("copies", cur.copies); press("events", cur.event); press("formats", cur.format); press("timers", cur.timer); press("cams", cur.cam);
+    press("filters", cur.filter); press("frames", cur.frame); press("fonts", cur.font); press("copies", cur.copies); press("events", cur.event); press("formats", cur.format); press("timers", cur.timer); press("cams", cur.cam); press("gaps", cur.gap); press("sounds", cur.sound);
     press("tpls", cur.template);
   }
   function press(group, v) {
@@ -605,6 +628,69 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
   $("reset").addEventListener("click", clearShots);
   $("again").addEventListener("click", clearShots);
 
+  /* ---------- sonido ---------- */
+  var actx = null, esVoice = null;
+  var WORDS = ["", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"];
+  function audioInit() {
+    try {
+      if (!actx) { var AC = window.AudioContext || window.webkitAudioContext; if (AC) actx = new AC(); }
+      if (actx && actx.state === "suspended") actx.resume();
+    } catch (e) {}
+    try {
+      if (window.speechSynthesis && !esVoice) {
+        var vs = speechSynthesis.getVoices();
+        esVoice = vs.filter(function (v) { return /^es[-_](CO|MX|US|419)/i.test(v.lang); })[0] || vs.filter(function (v) { return /^es/i.test(v.lang); })[0] || null;
+      }
+    } catch (e) {}
+  }
+  if (window.speechSynthesis) { try { speechSynthesis.onvoiceschanged = function () { esVoice = null; audioInit(); }; } catch (e) {} }
+  function tone(freq, dur, vol, delay, type) {
+    if (!actx) return;
+    try {
+      var t = actx.currentTime + (delay || 0), o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || "sine"; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.3, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.05);
+    } catch (e) {}
+  }
+  function shutterSound() {
+    if (!actx || cur.sound === "no") return;
+    try {
+      var len = Math.floor(actx.sampleRate * 0.12), buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      var src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+      f.type = "highpass"; f.frequency.value = 1800; g.gain.value = 0.55;
+      src.buffer = buf; src.connect(f); f.connect(g); g.connect(actx.destination); src.start();
+      tone(1400, 0.05, 0.25, 0.0, "square");
+    } catch (e) {}
+  }
+  function jingle(final) {
+    if (cur.sound === "no") return;
+    var notes = final ? [523, 659, 784, 1047] : [659, 784, 988];
+    notes.forEach(function (f, i) { tone(f, final && i === notes.length - 1 ? 0.5 : 0.18, 0.28, i * 0.13, "triangle"); });
+  }
+  function speak(text) {
+    if (cur.sound !== "voz" || !window.speechSynthesis) return false;
+    try {
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = esVoice ? esVoice.lang : "es-MX"; if (esVoice) u.voice = esVoice;
+      u.rate = 1.05; u.pitch = 1.05; u.volume = 1;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+      return true;
+    } catch (e) { return false; }
+  }
+  function countCue(n) {
+    if (cur.sound === "voz" && n <= 10 && speak(WORDS[n])) return;
+    if (cur.sound !== "no") tone(n === 1 ? 988 : 660, 0.16, 0.35);
+  }
+  $("soundTest").addEventListener("click", function () {
+    audioInit();
+    if (cur.sound === "no") { say("El sonido está en Silencio."); return; }
+    jingle(false);
+    setTimeout(function () { if (!speak("¿Listos? tres, dos, uno")) [0, 1, 2].forEach(function (k) { tone(k === 2 ? 988 : 660, 0.16, 0.35, 0.4 + k * 0.8); }); }, 450);
+    setTimeout(shutterSound, 3400);
+  });
+
   /* ---------- cámara en vivo ---------- */
   var stream = null, facing = "user", session = null, wakeLock = null;
   var video = $("video");
@@ -686,6 +772,7 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
         if (session.aborted) return resolve(false);
         if (n === 0) { el.textContent = ""; return resolve(true); }
         el.textContent = String(n); el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+        countCue(n);
         n--; setTimeout(tick, 1000);
       })();
     });
@@ -693,20 +780,32 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
   function runSession() {
     if (!session || session.running) return;
     session.running = true;
-    $("camGo").hidden = true; $("thumbs").hidden = session.list.length < 2; camMsg("");
+    audioInit();
+    $("camGo").hidden = true; $("thumbs").hidden = session.list.length < 2; camMsg("¿Listos?");
     drawThumbs();
-    var sec = parseInt(cur.timer, 10) || 3, chain = Promise.resolve(true);
+    var sec = parseInt(cur.timer, 10) || 3, gap = parseInt(cur.gap, 10) || 5;
+    jingle(false);
+    var said = speak(session.list.length > 1 ? "¿Listos? ¡Ahí vamos!" : "¿Listos?");
+    var chain = sleep(said ? 1800 : 900).then(function () { camMsg(""); return true; });
     session.list.forEach(function (i, k) {
       chain = chain.then(function (ok) {
         if (!ok || session.aborted) return false;
         session.current = i; placeGuide();
         $("camStep").textContent = session.list.length === 1 ? "¡Sonrían!" : "Foto " + (k + 1) + " de " + session.list.length;
-        return countdown(k === 0 ? sec : Math.min(sec, 3)).then(function (go) {
+        return countdown(k === 0 ? sec : gap).then(function (go) {
           if (!go || session.aborted) return false;
           shots[i] = captureFrame(i);
+          shutterSound();
           var f = $("flash"); f.classList.remove("on"); void f.offsetWidth; f.classList.add("on");
           drawThumbs();
-          return sleep(k < session.list.length - 1 ? 1300 : 900).then(function () { return true; });
+          if (k < session.list.length - 1) {
+            return sleep(700).then(function () {
+              if (session.aborted) return false;
+              camMsg("¡Cambien de pose!"); speak("¡Otra pose!");
+              return sleep(1300).then(function () { camMsg(""); return true; });
+            });
+          }
+          return sleep(600).then(function () { jingle(true); speak("¡Listo!"); return sleep(900).then(function () { return true; }); });
         });
       });
     });
@@ -847,7 +946,7 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
       cur[key] = b.dataset.v; say(""); scheduleSave(); render();
     });
   }
-  group("filters", "filter"); group("frames", "frame"); group("fonts", "font"); group("copies", "copies"); group("timers", "timer"); group("cams", "cam");
+  group("filters", "filter"); group("frames", "frame"); group("fonts", "font"); group("copies", "copies"); group("timers", "timer"); group("cams", "cam"); group("gaps", "gap"); group("sounds", "sound");
   $("tpls").addEventListener("click", function (e) {
     var b = e.target.closest("button"); if (!b) return;
     cur.template = b.dataset.v; scheduleSave(); loadTemplate(); render();
