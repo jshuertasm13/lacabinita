@@ -480,7 +480,7 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
     var box = $("tpls"); box.textContent = ""; box.dataset.fmt = cur.format;
     var evs = showAll ? Object.keys(TEMPLATES) : [cur.event];
     evs.forEach(function (ev) {
-      (TEMPLATES[ev] || []).forEach(function (t) { box.appendChild(tplButton(t[0], t[1], "plantillas/" + cur.format + "/" + t[0] + ".jpg")); });
+      (TEMPLATES[ev] || []).forEach(function (t) { box.appendChild(tplButton(t[0], t[1], "" + cur.format + "/" + t[0] + ".jpg")); });
     });
     if (cur.template.indexOf("asset:") === 0) box.appendChild(tplButton(cur.template, "La tuya", "/_blob/" + cur.template.slice(6)));
     else if (cur.template === "local") { var d = lsGet("lacabinita-bg-" + curId); box.appendChild(tplButton("local", "La tuya", d || null, "★")); }
@@ -532,7 +532,7 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
     if (!t) return null;
     if (t === "local") return lsGet("lacabinita-bg-" + curId);
     if (t.indexOf("asset:") === 0) return "/_blob/" + t.slice(6);
-    return "plantillas/" + cur.format + "/" + t + ".jpg";
+    return "" + cur.format + "/" + t + ".jpg";
   }
   function loadTemplate() {
     var key = cur.template + "|" + curId + "|" + cur.format;
@@ -968,11 +968,11 @@ details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: c
   /* ---------- sin señal ---------- */
   function allTemplateUrls() {
     var urls = [];
-    Object.keys(LAYOUTS).forEach(function (f) { Object.keys(TEMPLATES).forEach(function (ev) { TEMPLATES[ev].forEach(function (t) { urls.push("plantillas/" + f + "/" + t[0] + ".jpg"); }); }); });
+    Object.keys(LAYOUTS).forEach(function (f) { Object.keys(TEMPLATES).forEach(function (ev) { TEMPLATES[ev].forEach(function (t) { urls.push("" + f + "/" + t[0] + ".jpg"); }); }); });
     return urls;
   }
   function warmEvent(ev) {
-    (TEMPLATES[ev] || []).forEach(function (t) { Object.keys(LAYOUTS).forEach(function (f) { fetch("plantillas/" + f + "/" + t[0] + ".jpg").catch(function () {}); }); });
+    (TEMPLATES[ev] || []).forEach(function (t) { Object.keys(LAYOUTS).forEach(function (f) { fetch("" + f + "/" + t[0] + ".jpg").catch(function () {}); }); });
   }
   $("offline").addEventListener("click", function () {
     var urls = allTemplateUrls(), done = 0, fail = 0, btn = $("offline");

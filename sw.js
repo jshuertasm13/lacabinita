@@ -1,6 +1,6 @@
 /* La Cabinita: guarda la app y las plantillas en el equipo para que funcione sin internet.
    Cambia VERSION cada vez que subas una versión nueva de index.html. */
-var VERSION = "lacabinita-v1";
+var VERSION = "lacabinita-v2";
 var CORE = ["./", "index.html", "manifest.webmanifest", "apple-touch-icon.png", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", function (e) {
@@ -19,7 +19,7 @@ self.addEventListener("fetch", function (e) {
   var req = e.request;
   if (req.method !== "GET") return;
   var url = new URL(req.url);
-  var isTemplate = url.origin === location.origin && url.pathname.indexOf("/plantillas/") >= 0;
+  var isTemplate = url.origin === location.origin && /\/(tira|una|horiz|unah)\/[^/]+\.jpg$/.test(url.pathname);
   var isFont = url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com";
   var isPage = req.mode === "navigate" || (url.origin === location.origin && /\/(index\.html)?$/.test(url.pathname));
 
