@@ -1,0 +1,32 @@
+LA CABINITA - cómo publicarla en GitHub Pages
+==============================================
+
+1. Crea una cuenta gratis en https://github.com (si no tienes).
+2. Arriba a la derecha: "+" > "New repository".
+   - Repository name: lacabinita
+   - Marca "Public"
+   - Clic en "Create repository".
+3. En el repositorio vacío, clic en "uploading an existing file".
+   GitHub deja subir máximo 100 archivos por vez, así que súbelo en DOS tandas:
+   - Tanda 1: arrastra index.html, sw.js, manifest.webmanifest, los 3 .png
+     y las carpetas plantillas/tira, plantillas/una y plantillas/horiz
+     (arrastra la carpeta "plantillas" abierta y deja fuera "unah").
+     Clic en "Commit changes".
+   - Tanda 2: "Add file" > "Upload files", arrastra la carpeta plantillas/unah.
+     Clic en "Commit changes".
+   Importante: la carpeta debe quedar como plantillas/tira/..., plantillas/una/..., etc.
+4. Ve a Settings > Pages.
+   - Source: "Deploy from a branch"
+   - Branch: main  /  (root)  > Save
+5. Espera 1 o 2 minutos. Arriba aparece la dirección:
+   https://TU-USUARIO.github.io/lacabinita/
+
+EN EL IPAD O IPHONE
+- Abre esa dirección en Safari > Compartir > "Agregar a inicio".
+- Abre La Cabinita desde el ícono y acepta el permiso de cámara.
+- En "Personalizar este proyecto" toca "Preparar para usar sin internet"
+  (hazlo en casa, con wifi, antes de cada evento).
+
+PARA ACTUALIZAR LA APP MÁS ADELANTE
+- Sube el index.html nuevo encima del anterior (Add file > Upload files).
+- Si te paso un sw.js nuevo, súbelo también.

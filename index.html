@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La Cabinita</title>
+<meta name="theme-color" content="#E6ECF5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="La Cabinita">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Figtree:wght@400;600;700&family=Great+Vibes&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+<style>
+/* La Cabinita. La tira es la protagonista; el botón rojo abre la cámara a pantalla completa con cuenta
+   regresiva y toma las fotos seguidas. Tema claro fijo. Todo se arma a 20 px/mm sobre el papel postal
+   de la Selphy (100 x 148 mm). */
+:root {
+  color-scheme: light;
+  --bg: #E6ECF5;
+  --surface: #FFFFFF;
+  --ink: #131A2A;
+  --muted: #566176;
+  --line: #C6D0E0;
+  --accent: #E5352B;
+  --accent-ink: #FFFFFF;
+  --display: "Bagel Fat One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  --body: "Figtree", -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.4; -webkit-text-size-adjust: 100%; }
+.app { max-width: 760px; margin: 0 auto; padding: calc(18px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 14px; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 34px; line-height: 1; margin: 0; letter-spacing: 0.01em; }
+h1 span { color: var(--accent); }
+.count { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.projbar { display: flex; gap: 8px; align-items: center; background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; padding: 8px 8px 8px 12px; }
+.projbar label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+#projSel { flex: 1; min-width: 0; font: 700 16px var(--body); color: var(--ink); background: transparent; border: 0; padding: 8px 4px; -webkit-appearance: none; appearance: none; text-overflow: ellipsis; }
+.projbar .btn { width: auto; min-height: 40px; padding: 8px 12px; font-size: 14.5px; border-radius: 10px; }
+.sync { font-size: 12.5px; color: var(--muted); margin: -6px 2px 0; min-height: 1.2em; }
+
+.booth { display: grid; grid-template-columns: minmax(104px, 34%) 1fr; gap: 18px; align-items: start; }
+.stage { display: flex; flex-direction: column; align-items: center; gap: 8px; position: sticky; top: 12px; }
+#strip, #stripImg { display: block; width: 100%; max-width: 230px; height: auto; border-radius: 3px; box-shadow: 0 1px 0 rgba(19,26,42,.08), 0 14px 28px -10px rgba(19,26,42,.45); transform: rotate(-1.6deg); cursor: pointer; touch-action: manipulation; }
+.booth.wide { grid-template-columns: 1fr; }
+.booth.wide .stage { position: static; }
+.booth.wide #strip { max-width: 330px; transform: rotate(-1deg); }
+.booth.land #strip { max-width: 100%; transform: rotate(-0.8deg); }
+#stripImg { cursor: default; -webkit-touch-callout: default; transform: none; max-width: 100%; }
+.hint { font-size: 12.5px; color: var(--muted); text-align: center; margin: 4px 0 0; }
+
+.panel { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+legend, .lab { display: block; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0; margin-bottom: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 600 14px var(--body); color: var(--ink); background: var(--surface); border: 1.5px solid var(--line); border-radius: 999px; padding: 8px 12px; min-height: 38px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--line); cursor: pointer; padding: 0; }
+.sw[aria-pressed="true"] { outline: 3px solid var(--ink); outline-offset: 2px; }
+.tpls { display: flex; flex-wrap: wrap; gap: 10px; }
+.tpl { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 66px; padding: 0; background: none; border: 0; cursor: pointer; font: 600 11.5px var(--body); color: var(--ink); text-align: center; line-height: 1.2; }
+.tpl .th { width: 56px; height: 166px; border-radius: 4px; border: 1.5px solid var(--line); background: var(--surface) center/cover no-repeat; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--muted); }
+#tpls[data-fmt="una"] .th, #tpls[data-fmt="horiz"] .th { width: 80px; height: 118px; }
+#tpls[data-fmt="una"] .tpl, #tpls[data-fmt="horiz"] .tpl { width: 86px; }
+#tpls[data-fmt="unah"] .th { width: 120px; height: 81px; }
+#tpls[data-fmt="unah"] .tpl { width: 124px; }
+.tpl[aria-pressed="true"] .th { outline: 3px solid var(--ink); outline-offset: 2px; }
+.field { display: flex; flex-direction: column; gap: 10px; }
+input[type="text"] { font: 600 16px var(--body); color: var(--ink); background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; }
+.note { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+.actions { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+.btn { font: 700 16px var(--body); border-radius: 14px; padding: 13px 14px; min-height: 50px; cursor: pointer; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); width: 100%; }
+.btn.small { min-height: 42px; padding: 9px 12px; font-size: 14.5px; border-radius: 10px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-size: 18px; min-height: 58px; box-shadow: 0 5px 0 #A8201A; }
+.btn.primary:active { transform: translateY(3px); box-shadow: 0 2px 0 #A8201A; }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--muted); min-height: 40px; padding: 8px; text-decoration: underline; text-underline-offset: 3px; }
+.btn.danger { color: #B3261E; border-color: #E8B8B4; }
+.btn.danger.armed { background: #B3261E; color: #fff; border-color: #B3261E; }
+.btn[hidden], [hidden] { display: none !important; }
+.row { display: flex; gap: 6px; flex-wrap: wrap; }
+.row .btn { flex: 1 1 120px; }
+details.custom { background: var(--surface); border: 1.5px solid var(--line); border-radius: 14px; }
+details.custom > summary { list-style: none; cursor: pointer; padding: 14px 16px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+details.custom > summary::-webkit-details-marker { display: none; }
+details.custom > summary::after { content: "+"; font-size: 22px; line-height: 1; color: var(--muted); }
+details.custom[open] > summary::after { content: "–"; }
+details.custom .inner { padding: 4px 16px 18px; display: flex; flex-direction: column; gap: 18px; border-top: 1.5px solid var(--bg); }
+:focus-visible { outline: 3px solid #2D5BFF; outline-offset: 2px; }
+#status { min-height: 1.4em; font-size: 14px; font-weight: 600; color: var(--ink); margin: 0; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; opacity: 0; }
+/* cámara */
+#cam { position: fixed; inset: 0; z-index: 50; background: #0D1017; color: #fff; display: flex; flex-direction: column; }
+#cam .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: calc(10px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) 10px calc(14px + env(safe-area-inset-left)); }
+#cam .top b { font-size: 18px; font-variant-numeric: tabular-nums; }
+#cam .cbtn { font: 700 15px var(--body); color: #fff; background: rgba(255,255,255,.14); border: 0; border-radius: 999px; padding: 10px 16px; min-height: 44px; cursor: pointer; }
+#camStage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+#video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+#video.mirror { transform: scaleX(-1); }
+#guide { position: absolute; border: 3px solid rgba(255,255,255,.9); border-radius: 6px; box-shadow: 0 0 0 9999px rgba(13,16,23,.62); pointer-events: none; }
+#countNum { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--display); font-size: min(42vw, 42vh); line-height: 1; color: #fff; text-shadow: 0 6px 30px rgba(0,0,0,.5); pointer-events: none; }
+#countNum.pop { animation: pop .9s ease-out; }
+@keyframes pop { from { transform: scale(1.35); opacity: 0; } 25% { opacity: 1; } to { transform: scale(.9); opacity: .85; } }
+#flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+#flash.on { animation: flash .45s ease-out; }
+@keyframes flash { from { opacity: .95; } to { opacity: 0; } }
+#cam .bottom { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 14px calc(14px + env(safe-area-inset-bottom)); min-height: 96px; }
+#thumbs { display: flex; gap: 8px; }
+#thumbs canvas, #thumbs span { width: 64px; height: 64px; border-radius: 6px; background: rgba(255,255,255,.12); object-fit: cover; display: block; }
+#camMsg { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); background: rgba(13,16,23,.75); padding: 8px 14px; border-radius: 999px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+#camGo { font: 700 20px var(--body); color: #fff; background: var(--accent); border: 0; border-radius: 999px; padding: 14px 30px; min-height: 60px; box-shadow: 0 5px 0 #A8201A; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .btn.primary:active { transform: none; } #countNum.pop, #flash.on { animation: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>La <span>Cabinita</span></h1>
+    <div class="count" id="count">0 de 3 fotos</div>
+  </header>
+
+  <div class="projbar">
+    <label for="projSel">Proyecto</label>
+    <select id="projSel"><option>Cargando…</option></select>
+    <button class="btn" id="newProj" type="button">Nuevo</button>
+  </div>
+  <p class="sync" id="sync" role="status" aria-live="polite"></p>
+
+  <div class="booth" id="booth">
+    <div class="stage">
+      <canvas id="strip" width="1000" height="2960" role="img" aria-label="Vista previa de tu tira de fotos"></canvas>
+      <img id="stripImg" alt="Tu hoja lista para imprimir" hidden>
+      <p class="hint" id="hint">Toca un recuadro para tomar o repetir esa foto.</p>
+    </div>
+
+    <div class="panel">
+      <fieldset>
+        <legend>Formato</legend>
+        <div class="chips" id="formats">
+          <button class="chip" type="button" data-v="tira" aria-pressed="true">Tira de 3</button>
+          <button class="chip" type="button" data-v="una" aria-pressed="false">Una foto</button>
+          <button class="chip" type="button" data-v="horiz" aria-pressed="false">2 horizontales</button>
+          <button class="chip" type="button" data-v="unah" aria-pressed="false">1 horizontal</button>
+        </div>
+        <p class="note" id="rotHint" hidden>Gira el iPhone de lado al tomar cada foto.</p>
+      </fieldset>
+      <div class="actions">
+        <button class="btn primary" id="shoot" type="button">¡Empezar!</button>
+        <button class="btn" id="save" type="button" hidden>Guardar o imprimir</button>
+        <button class="btn" id="pick" type="button">Elegir de la galería</button>
+        <button class="btn" id="again" type="button" hidden>Siguientes invitados</button>
+        <p id="status" role="status" aria-live="polite"></p>
+      </div>
+      <button class="btn quiet" id="reset" type="button">Borrar las fotos</button>
+    </div>
+  </div>
+
+  <details class="custom" id="custom">
+    <summary>Personalizar este proyecto</summary>
+    <div class="inner">
+      <div>
+        <label class="lab" for="projName">Nombre del proyecto</label>
+        <input id="projName" type="text" maxlength="40" autocomplete="off">
+      </div>
+
+      <fieldset>
+        <legend>Evento</legend>
+        <div class="chips" id="events">
+          <button class="chip" type="button" data-v="boda">Boda</button>
+          <button class="chip" type="button" data-v="bautizo">Bautizo</button>
+          <button class="chip" type="button" data-v="navidad">Navidad</button>
+          <button class="chip" type="button" data-v="finde">Fin de año</button>
+          <button class="chip" type="button" data-v="cumple">Cumpleaños</button>
+        </div>
+        <p class="note">Al tocar un evento se ponen su plantilla, textos y letra. Luego puedes cambiarlos.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Plantilla</legend>
+        <div class="tpls" id="tpls"></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn small" id="allTpls" type="button">Ver las de otros eventos</button>
+          <button class="btn small" id="bgPick" type="button">Subir plantilla propia</button>
+        </div>
+        <p class="note" id="tplNote"></p>
+      </fieldset>
+
+      <div class="field">
+        <div>
+          <label class="lab" for="caption">Texto al pie</label>
+          <input id="caption" type="text" maxlength="28" autocomplete="off">
+        </div>
+        <div>
+          <label class="lab" for="sub">Segunda línea</label>
+          <input id="sub" type="text" maxlength="34" autocomplete="off">
+        </div>
+      </div>
+
+      <fieldset>
+        <legend>Letra</legend>
+        <div class="chips" id="fonts">
+          <button class="chip" type="button" data-v="elegante" aria-pressed="false">Elegante</button>
+          <button class="chip" type="button" data-v="clasica" aria-pressed="false">Clásica</button>
+          <button class="chip" type="button" data-v="divertida" aria-pressed="true">Divertida</button>
+        </div>
+      </fieldset>
+
+      <fieldset id="frameSet">
+        <legend>Color del marco</legend>
+        <div class="swatches" id="frames"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cuenta regresiva</legend>
+        <div class="chips" id="timers">
+          <button class="chip" type="button" data-v="3" aria-pressed="true">3 segundos</button>
+          <button class="chip" type="button" data-v="5" aria-pressed="false">5 segundos</button>
+          <button class="chip" type="button" data-v="10" aria-pressed="false">10 segundos</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cámara</legend>
+        <div class="chips" id="cams">
+          <button class="chip" type="button" data-v="user" aria-pressed="true">Frontal</button>
+          <button class="chip" type="button" data-v="environment" aria-pressed="false">Trasera</button>
+        </div>
+        <p class="note">Frontal: los invitados se ven en la pantalla. Trasera: mejor calidad, pero alguien toma la foto.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Filtro</legend>
+        <div class="chips" id="filters">
+          <button class="chip" type="button" data-v="color" aria-pressed="true">Color</button>
+          <button class="chip" type="button" data-v="bn" aria-pressed="false">Blanco y negro</button>
+          <button class="chip" type="button" data-v="sepia" aria-pressed="false">Sepia</button>
+          <button class="chip" type="button" data-v="vivo" aria-pressed="false">Vivo</button>
+        </div>
+      </fieldset>
+
+      <fieldset id="copiesSet">
+        <legend>Copias al guardar</legend>
+        <div class="chips" id="copies">
+          <button class="chip" type="button" data-v="2" aria-pressed="true">2 tiras por hoja</button>
+          <button class="chip" type="button" data-v="1" aria-pressed="false">1 tira sola</button>
+        </div>
+        <p class="note">La hoja de 2 tiras mide 100 × 148 mm, el papel postal de la Selphy. Se corta por la mitad. Los demás formatos siempre llenan la hoja completa.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Sin señal</legend>
+        <button class="btn small" id="offline" type="button">Preparar para usar sin internet</button>
+        <p class="note" id="offlineNote">Descarga todas las plantillas y letras en este equipo. Hazlo en casa antes del evento.</p>
+      </fieldset>
+
+      <button class="btn small danger" id="delProj" type="button">Eliminar este proyecto</button>
+    </div>
+  </details>
+
+  <div id="cam" hidden role="dialog" aria-modal="true" aria-label="Cámara">
+    <div class="top">
+      <b id="camStep">Foto 1 de 3</b>
+      <div class="row" style="flex-wrap:nowrap">
+        <button class="cbtn" id="camFlip" type="button">Cambiar cámara</button>
+        <button class="cbtn" id="camClose" type="button">Cerrar</button>
+      </div>
+    </div>
+    <div id="camStage">
+      <video id="video" playsinline muted autoplay></video>
+      <div id="guide"></div>
+      <div id="countNum" aria-live="assertive"></div>
+      <div id="flash"></div>
+      <div id="camMsg" hidden></div>
+    </div>
+    <div class="bottom">
+      <button id="camGo" type="button">Comenzar</button>
+      <div id="thumbs" hidden></div>
+    </div>
+  </div>
+
+  <input class="vh" id="camInput" type="file" accept="image/*" capture="user" tabindex="-1" aria-hidden="true">
+  <input class="vh" id="libInput" type="file" accept="image/*" multiple tabindex="-1" aria-hidden="true">
+  <input class="vh" id="bgInput" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* Todo a 20 px/mm sobre el papel postal de la Selphy (100 x 148 mm = 2000 x 2960 px).
+     La tira es media hoja (50 x 148 mm): dos tiras llenan una hoja. */
+  var LAYOUTS = {
+    tira:  { w: 1000, h: 2960, foot: 2530, k: 1, slots: [[110, 110, 780, 780], [110, 930, 780, 780], [110, 1750, 780, 780]],
+             note: "Plantilla propia: imagen de 1000 × 2960 px. Fotos de 780 × 780 px a 110 px del borde izquierdo, con tope en 110, 930 y 1750 px. El pie libre empieza en 2530 px." },
+    una:   { w: 2000, h: 2960, foot: 2335, k: 1.6, slots: [[110, 110, 1780, 2225]],
+             note: "Plantilla propia: imagen de 2000 × 2960 px. Foto de 1780 × 2225 px a 110 px de arriba y de la izquierda. El pie libre empieza en 2335 px." },
+    horiz: { w: 2000, h: 2960, foot: 2524, k: 1.6, slots: [[110, 110, 1780, 1187], [110, 1337, 1780, 1187]],
+             note: "Plantilla propia: imagen de 2000 × 2960 px. Fotos de 1780 × 1187 px a 110 px de la izquierda, con tope en 110 y 1337 px. El pie libre empieza en 2524 px." },
+    unah:  { w: 2960, h: 2000, foot: 1590, k: 1.3, slots: [[110, 110, 2740, 1480]],
+             note: "Plantilla propia: imagen acostada de 2960 × 2000 px. Foto de 2740 × 1480 px a 110 px de arriba y de la izquierda. El pie libre empieza en 1590 px." }
+  };
+  var W = 1000, H = 2960, N = 3, MX = 110, FOOT_Y = 2530, FOOT_H = 430, LK = 1, LAY = LAYOUTS.tira;
+  function setLayout(f) {
+    LAY = LAYOUTS[f] || LAYOUTS.tira;
+    W = LAY.w; H = LAY.h; N = LAY.slots.length; FOOT_Y = LAY.foot; FOOT_H = H - FOOT_Y; LK = LAY.k;
+    while (shots.length < N) shots.push(null);
+    shots.length = N;
+  }
+  function slots() { return LAY.slots.map(function (s) { return { x: s[0], y: s[1], w: s[2], h: s[3] }; }); }
+
+  var FRAMES = [
+    { v: "#FFFFFF", name: "Blanco" }, { v: "#F4EFE6", name: "Marfil" }, { v: "#16181D", name: "Negro" },
+    { v: "#8FA58B", name: "Verde salvia" }, { v: "#7A1F2B", name: "Vino" }, { v: "#1F2A44", name: "Azul noche" },
+    { v: "#E5352B", name: "Rojo" }, { v: "#FF8FB1", name: "Rosa" }
+  ];
+  var FONTS = {
+    elegante:  { css: "400 SIZEpx 'Great Vibes', 'Snell Roundhand', cursive", max: 150 },
+    clasica:   { css: "italic 600 SIZEpx 'Playfair Display', Georgia, serif", max: 104 },
+    divertida: { css: "400 SIZEpx 'Bagel Fat One', 'Arial Rounded MT Bold', sans-serif", max: 100 }
+  };
+  var TEMPLATES = {
+    boda:    [["boda-1", "Floral acuarela"], ["boda-2", "Rústico kraft"], ["boda-3", "Verde salvia"], ["boda-4", "Jardín blanco"], ["boda-5", "Madera y luces"]],
+    bautizo: [["bautizo-1", "Cielo y palomas"], ["bautizo-2", "Olivo y cruz"], ["bautizo-3", "Lino y estrellas"], ["bautizo-4", "Acuarela azul"], ["bautizo-5", "Rosa y paloma"]],
+    navidad: [["navidad-1", "Vino y nieve"], ["navidad-2", "Escocés"], ["navidad-3", "Nieve y pino"], ["navidad-4", "Luces de colores"], ["navidad-5", "Copos azules"]],
+    finde:   [["finde-1", "Fuegos artificiales"], ["finde-2", "Confeti dorado"], ["finde-3", "Champaña"], ["finde-4", "Plata y oro"], ["finde-5", "Neón"]],
+    cumple:  [["cumple-1", "Globos"], ["cumple-2", "Banderines"], ["cumple-3", "Estrellas"], ["cumple-4", "Arcoíris"], ["cumple-5", "Noche de globos"]]
+  };
+  var EVENT_NAMES = { boda: "Boda", bautizo: "Bautizo", navidad: "Navidad", finde: "Fin de año", cumple: "Cumpleaños" };
+  var now = new Date();
+  var TODAY = now.toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+  var NEXT_YEAR = now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear();
+  var EVENTS = {
+    boda:    { caption: "Sebas & Majo", sub: "Nuestra boda", font: "elegante", frame: "#FFFFFF" },
+    bautizo: { caption: "Mi bautizo", sub: TODAY, font: "clasica", frame: "#F4EFE6" },
+    navidad: { caption: "Feliz Navidad", sub: String(now.getFullYear()), font: "elegante", frame: "#7A1F2B" },
+    finde:   { caption: "Feliz " + NEXT_YEAR, sub: "Fin de año", font: "divertida", frame: "#1F2A44" },
+    cumple:  { caption: "Feliz cumpleaños", sub: TODAY, font: "divertida", frame: "#FF8FB1" }
+  };
+  var FIELDS = ["name", "format", "event", "template", "caption", "sub", "font", "frame", "filter", "copies", "timer", "cam"];
+
+  function defaults(ev) {
+    var e = EVENTS[ev] || EVENTS.boda;
+    return { name: EVENT_NAMES[ev] || "Proyecto nuevo", format: "tira", event: ev, template: ev + "-1", caption: e.caption, sub: e.sub, font: e.font, frame: e.frame, filter: "color", copies: "2", timer: "3", cam: "user" };
+  }
+  function clean(p) {
+    var d = defaults(EVENTS[p && p.event] ? p.event : "boda"), o = {};
+    FIELDS.forEach(function (k) { o[k] = (p && typeof p[k] === "string") ? p[k] : d[k]; });
+    if (!FONTS[o.font]) o.font = d.font;
+    if (o.copies !== "1") o.copies = "2";
+    if (!LAYOUTS[o.format]) o.format = "tira";
+    if (["3", "5", "10"].indexOf(o.timer) < 0) o.timer = "3";
+    if (o.cam !== "environment") o.cam = "user";
+    return o;
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var canvas = $("strip"), ctx = canvas.getContext("2d");
+  var stripImg = $("stripImg"), lastUrl = null;
+  var renderStamp = 0;
+
+  var cur = clean(defaults("boda"));      // ajustes del proyecto abierto
+  var curId = null;                        // id del proyecto abierto
+  var projects = [];                       // [{id, orden, ...campos}]
+  var shots = [null, null, null], target = null;
+  var bg = null, bgDark = false, bgKey = "";
+  var store = null;                        // capa de guardado (db o este equipo)
+
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  function filled() { var n = 0; for (var i = 0; i < N; i++) if (shots[i]) n++; return n; }
+  function nextEmpty() { for (var i = 0; i < N; i++) if (!shots[i]) return i; return -1; }
+  function say(t) { $("status").textContent = t || ""; }
+  function syncNote(t) { $("sync").textContent = t || ""; }
+  function isDark(hex) {
+    var r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) < 150;
+  }
+
+  /* ---------- filtros (por píxel: ctx.filter no existe en Safari de iPhone) ---------- */
+  function filtered(shot) {
+    var f = cur.filter;
+    if (f === "color") return shot.base;
+    if (shot.cache[f]) return shot.cache[f];
+    var c = document.createElement("canvas");
+    c.width = shot.base.width; c.height = shot.base.height;
+    var x = c.getContext("2d");
+    x.drawImage(shot.base, 0, 0);
+    var im = x.getImageData(0, 0, c.width, c.height), d = im.data;
+    for (var i = 0; i < d.length; i += 4) {
+      var r = d[i], g = d[i + 1], b = d[i + 2], l = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (f === "bn") { l = (l - 128) * 1.18 + 128; r = g = b = l; }
+      else if (f === "sepia") {
+        var nr = 0.393 * r + 0.769 * g + 0.189 * b, ng = 0.349 * r + 0.686 * g + 0.168 * b, nb = 0.272 * r + 0.534 * g + 0.131 * b;
+        r = nr; g = ng; b = nb;
+      } else if (f === "vivo") {
+        r = ((l + (r - l) * 1.45) - 128) * 1.1 + 128;
+        g = ((l + (g - l) * 1.45) - 128) * 1.1 + 128;
+        b = ((l + (b - l) * 1.45) - 128) * 1.1 + 128;
+      }
+      d[i] = r < 0 ? 0 : r > 255 ? 255 : r;
+      d[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g;
+      d[i + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
+    }
+    x.putImageData(im, 0, 0);
+    shot.cache[f] = c;
+    return c;
+  }
+
+  /* ---------- dibujo ---------- */
+  function drawCover(c, img, x, y, w, h, biasY) {
+    var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    var ir = iw / ih, sr = w / h, sw, sh, sx, sy;
+    if (ir > sr) { sh = ih; sw = sh * sr; sx = (iw - sw) / 2; sy = 0; }
+    else { sw = iw; sh = sw / sr; sx = 0; sy = (ih - sh) * biasY; }
+    c.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+  }
+  function setFont(text, spec, maxW) {
+    var size = Math.round(spec.max * LK);
+    do { ctx.font = spec.css.replace("SIZE", size); size -= 4; } while (ctx.measureText(text).width > maxW && size > 36 * LK);
+  }
+  function render() {
+    var useBg = bg && cur.template;
+    var dark = useBg ? bgDark : isDark(cur.frame);
+    canvas.width = W; canvas.height = H;
+    ctx.fillStyle = cur.frame; ctx.fillRect(0, 0, W, H);
+    if (useBg) ctx.drawImage(bg, 0, 0, W, H);
+    var ink = dark ? "#FFFFFF" : "#131A2A";
+    slots().forEach(function (s, i) {
+      var shot = shots[i];
+      if (shot) { drawCover(ctx, filtered(shot), s.x, s.y, s.w, s.h, 0.4); return; }
+      ctx.fillStyle = useBg ? "rgba(255,255,255,.82)" : (dark ? "rgba(255,255,255,.16)" : "rgba(19,26,42,.08)");
+      ctx.fillRect(s.x, s.y, s.w, s.h);
+      var soft = useBg ? false : dark;
+      ctx.save();
+      ctx.strokeStyle = soft ? "rgba(255,255,255,.55)" : "rgba(19,26,42,.35)";
+      ctx.lineWidth = 6; ctx.setLineDash([28, 22]);
+      ctx.strokeRect(s.x + 24, s.y + 24, s.w - 48, s.h - 48);
+      ctx.restore();
+      ctx.fillStyle = soft ? "rgba(255,255,255,.75)" : "rgba(19,26,42,.5)";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = "400 " + Math.round(s.h * 0.34) + "px 'Bagel Fat One', 'Arial Rounded MT Bold', sans-serif";
+      ctx.fillText(String(i + 1), s.x + s.w / 2, s.y + s.h / 2 - s.h * 0.04);
+      ctx.font = "700 " + Math.round(s.h * 0.07) + "px Figtree, -apple-system, sans-serif";
+      ctx.fillText("Toca para tomar", s.x + s.w / 2, s.y + s.h * 0.78);
+    });
+    var cap = cur.caption.trim(), sub = cur.sub.trim();
+    ctx.fillStyle = ink; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    if (cap) { setFont(cap, FONTS[cur.font], W - (LK > 1 ? 420 : 150)); ctx.fillText(cap, W / 2, FOOT_Y + FOOT_H * (sub ? 0.45 : 0.52)); }
+    if (sub) {
+      ctx.globalAlpha = 0.78;
+      var size = Math.round(44 * LK);
+      do { ctx.font = "600 " + size + "px Figtree, -apple-system, sans-serif"; size -= 2; } while (ctx.measureText(sub.toUpperCase()).width > W - (LK > 1 ? 420 : 200) && size > 24);
+      ctx.fillText(sub.toUpperCase(), W / 2, FOOT_Y + FOOT_H * (cap ? 0.77 : 0.52));
+      ctx.globalAlpha = 1;
+    }
+    syncUI();
+    renderStamp++; prepareSheet();
+  }
+
+  var showAll = false;
+  function tplButton(id, label, thumb, glyph) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "tpl"; b.dataset.v = id;
+    var th = document.createElement("span"); th.className = "th";
+    if (thumb) th.style.backgroundImage = "url('" + thumb + "')"; else th.textContent = glyph || "";
+    var t = document.createElement("span"); t.textContent = label;
+    b.appendChild(th); b.appendChild(t);
+    return b;
+  }
+  function renderTemplates() {
+    var box = $("tpls"); box.textContent = ""; box.dataset.fmt = cur.format;
+    var evs = showAll ? Object.keys(TEMPLATES) : [cur.event];
+    evs.forEach(function (ev) {
+      (TEMPLATES[ev] || []).forEach(function (t) { box.appendChild(tplButton(t[0], t[1], "plantillas/" + cur.format + "/" + t[0] + ".jpg")); });
+    });
+    if (cur.template.indexOf("asset:") === 0) box.appendChild(tplButton(cur.template, "La tuya", "/_blob/" + cur.template.slice(6)));
+    else if (cur.template === "local") { var d = lsGet("lacabinita-bg-" + curId); box.appendChild(tplButton("local", "La tuya", d || null, "★")); }
+    box.appendChild(tplButton("", "Sin plantilla", null, "∅"));
+    $("allTpls").textContent = showAll ? "Ver solo las de este evento" : "Ver las de otros eventos";
+    press("tpls", cur.template);
+  }
+
+  function syncUI() {
+    var f = filled(), ne = nextEmpty();
+    $("count").textContent = f + " de " + N + (N === 1 ? " foto" : " fotos");
+    $("shoot").hidden = ne < 0;
+    if (ne >= 0) $("shoot").textContent = N === 1 ? "Tomar foto" : "Tomar foto " + (ne + 1) + " de " + N;
+    $("booth").classList.toggle("wide", cur.format !== "tira");
+    $("copiesSet").hidden = cur.format !== "tira";
+    $("tplNote").textContent = LAY.note;
+    $("rotHint").hidden = cur.format !== "horiz" && cur.format !== "unah";
+    $("booth").classList.toggle("land", cur.format === "unah");
+    $("save").hidden = ne >= 0;
+    $("save").classList.toggle("primary", ne < 0);
+    $("again").hidden = ne >= 0;
+    $("pick").hidden = ne < 0;
+    $("frameSet").hidden = !!cur.template;
+    if (!stripImg.hidden) { stripImg.hidden = true; canvas.hidden = false; $("hint").textContent = "Toca un recuadro para tomar o repetir esa foto."; }
+    press("filters", cur.filter); press("frames", cur.frame); press("fonts", cur.font); press("copies", cur.copies); press("events", cur.event); press("formats", cur.format); press("timers", cur.timer); press("cams", cur.cam);
+    press("tpls", cur.template);
+  }
+  function press(group, v) {
+    Array.prototype.forEach.call($(group).children, function (b) { b.setAttribute("aria-pressed", b.dataset.v === v ? "true" : "false"); });
+  }
+
+  /* ---------- plantillas ---------- */
+  function analyse(img) {
+    var c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    var x = c.getContext("2d");
+    x.fillStyle = "#FFFFFF"; x.fillRect(0, 0, W, H);
+    drawCover(x, img, 0, 0, W, H, 0.5);
+    var dark = false;
+    try {
+      var d = x.getImageData(MX, FOOT_Y + 60, W - 2 * MX, FOOT_H - 120).data, sum = 0, n = 0;
+      for (var i = 0; i < d.length; i += 64) { sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++; }
+      dark = (sum / n) < 140;
+    } catch (e) {}
+    return { canvas: c, dark: dark };
+  }
+  var bgCache = {};
+  function templateSrc(t) {
+    if (!t) return null;
+    if (t === "local") return lsGet("lacabinita-bg-" + curId);
+    if (t.indexOf("asset:") === 0) return "/_blob/" + t.slice(6);
+    return "plantillas/" + cur.format + "/" + t + ".jpg";
+  }
+  function loadTemplate() {
+    var key = cur.template + "|" + curId + "|" + cur.format;
+    if (key === bgKey) return;
+    bgKey = key;
+    var src = templateSrc(cur.template);
+    if (!src) { bg = null; render(); return; }
+    if (bgCache[src]) { bg = bgCache[src].canvas; bgDark = bgCache[src].dark; render(); return; }
+    var img = new Image();
+    img.onload = function () {
+      var a = analyse(img); bgCache[src] = a;
+      if (bgKey === key) { bg = a.canvas; bgDark = a.dark; render(); }
+    };
+    img.onerror = function () { if (bgKey === key) { bg = null; say("No se pudo cargar la plantilla. Revisa la conexión."); render(); } };
+    img.src = src;
+  }
+
+  /* ---------- fotos ---------- */
+  function loadImage(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () { resolve({ img: img, done: function () { URL.revokeObjectURL(url); } }); };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("img")); };
+      img.src = url;
+    });
+  }
+  function loadShot(file) {
+    return loadImage(file).then(function (r) {
+      var img = r.img, max = 1400, k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      var c = document.createElement("canvas");
+      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      r.done();
+      return { base: c, cache: {} };
+    });
+  }
+  function addFiles(files, startAt) {
+    var list = Array.prototype.slice.call(files || []);
+    if (!list.length) return;
+    say("Revelando…");
+    var chain = Promise.resolve(), idx = startAt;
+    list.forEach(function (file) {
+      chain = chain.then(function () {
+        var i = (idx != null) ? idx : nextEmpty();
+        idx = null;
+        if (i < 0 || i >= N) return;
+        return loadShot(file).then(function (shot) { shots[i] = shot; render(); });
+      });
+    });
+    chain.then(function () {
+      var ne = nextEmpty();
+      say(ne < 0 ? "¡Lista! Ya puedes guardarla." : "Va la " + (ne + 1) + ". Cambien la pose.");
+    }).catch(function () { say("No se pudo leer esa foto. Intenta con otra."); });
+  }
+  function openCamera(i) { target = i; $("camInput").value = ""; $("camInput").click(); }
+
+  $("camInput").addEventListener("change", function (e) { addFiles(e.target.files, target); target = null; });
+  $("libInput").addEventListener("change", function (e) { addFiles(e.target.files, null); });
+  $("shoot").addEventListener("click", function () { startSession(null); });
+  $("pick").addEventListener("click", function () { $("libInput").value = ""; $("libInput").click(); });
+  canvas.addEventListener("click", function (e) {
+    var kx = canvas.width / canvas.clientWidth, ky = canvas.height / canvas.clientHeight;
+    var x = e.offsetX * kx, y = e.offsetY * ky, ss = slots();
+    for (var i = 0; i < ss.length; i++) {
+      var s = ss[i];
+      if (x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) { startSession([i]); return; }
+    }
+  });
+  function clearShots() { for (var i = 0; i < shots.length; i++) shots[i] = null; say(""); render(); }
+  $("reset").addEventListener("click", clearShots);
+  $("again").addEventListener("click", clearShots);
+
+  /* ---------- cámara en vivo ---------- */
+  var stream = null, facing = "user", session = null, wakeLock = null;
+  var video = $("video");
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function camMsg(t) { var m = $("camMsg"); m.textContent = t || ""; m.hidden = !t; }
+  function stopStream() { if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; } video.srcObject = null; }
+  function startStream() {
+    stopStream();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return Promise.reject(new Error("nocam"));
+    return navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1440 } } })
+      .then(function (s) {
+        stream = s; video.srcObject = s;
+        video.classList.toggle("mirror", facing === "user");
+        return new Promise(function (res) {
+          if (video.readyState >= 1 && video.videoWidth) res(); else video.onloadedmetadata = function () { res(); };
+        }).then(function () { return video.play().catch(function () {}); }).then(placeGuide);
+      });
+  }
+  function slotAspect(i) { var s = slots()[i || 0]; return s.w / s.h; }
+  function placeGuide() {
+    var st = $("camStage").getBoundingClientRect(), vw = video.videoWidth || 4, vh = video.videoHeight || 3;
+    var sc = Math.min(st.width / vw, st.height / vh), dw = vw * sc, dh = vh * sc;
+    var dx = (st.width - dw) / 2, dy = (st.height - dh) / 2;
+    var a = slotAspect(session ? session.current : 0), gw = dw, gh = dw / a;
+    if (gh > dh) { gh = dh; gw = dh * a; }
+    var g = $("guide").style;
+    g.width = gw + "px"; g.height = gh + "px"; g.left = (dx + (dw - gw) / 2) + "px"; g.top = (dy + (dh - gh) / 2) + "px";
+  }
+  window.addEventListener("resize", function () { if (!$("cam").hidden) placeGuide(); });
+  function captureFrame(i) {
+    var vw = video.videoWidth, vh = video.videoHeight, a = slotAspect(i);
+    var cw = vw, ch = vw / a;
+    if (ch > vh) { ch = vh; cw = vh * a; }
+    var sx = (vw - cw) / 2, sy = (vh - ch) / 2, k = Math.min(1, 1600 / Math.max(cw, ch));
+    var c = document.createElement("canvas");
+    c.width = Math.round(cw * k); c.height = Math.round(ch * k);
+    var x = c.getContext("2d");
+    if (facing === "user") { x.translate(c.width, 0); x.scale(-1, 1); }   /* la foto sale como se vio en pantalla */
+    x.drawImage(video, sx, sy, cw, ch, 0, 0, c.width, c.height);
+    return { base: c, cache: {} };
+  }
+  function drawThumbs() {
+    var box = $("thumbs"); box.textContent = "";
+    session.list.forEach(function (i) {
+      if (shots[i]) {
+        var t = document.createElement("canvas"); t.width = 128; t.height = 128;
+        drawCover(t.getContext("2d"), shots[i].base, 0, 0, 128, 128, 0.5);
+        box.appendChild(t);
+      } else box.appendChild(document.createElement("span"));
+    });
+  }
+  function openCam(list) {
+    session = { list: list, current: list[0], aborted: false, running: false };
+    facing = cur.cam === "environment" ? "environment" : "user";
+    $("cam").hidden = false; $("camGo").hidden = false; $("thumbs").hidden = true; $("countNum").textContent = "";
+    $("camStep").textContent = list.length === 1 ? (N === 1 ? "Foto" : "Foto " + (list[0] + 1) + " de " + N) : list.length + " fotos seguidas";
+    $("camGo").textContent = list.length === 1 ? "Tomar foto" : "Comenzar";
+    camMsg("Abriendo la cámara…");
+    try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (w) { wakeLock = w; }).catch(function () {}); } catch (e) {}
+    startStream().then(function () {
+      camMsg(cur.format === "horiz" || cur.format === "unah" ? "Pon el equipo de lado para las fotos horizontales" : "");
+      placeGuide();
+    }).catch(function () {
+      closeCam();
+      say("No se pudo abrir la cámara. Revisa el permiso en Ajustes > Safari > Cámara. Mientras tanto, usa la cámara normal.");
+      openCamera(list[0]);
+    });
+  }
+  function closeCam() {
+    if (session) session.aborted = true;
+    stopStream(); $("cam").hidden = true; camMsg("");
+    if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+    render();
+  }
+  function countdown(sec) {
+    var el = $("countNum"), n = sec;
+    return new Promise(function (resolve) {
+      (function tick() {
+        if (session.aborted) return resolve(false);
+        if (n === 0) { el.textContent = ""; return resolve(true); }
+        el.textContent = String(n); el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+        n--; setTimeout(tick, 1000);
+      })();
+    });
+  }
+  function runSession() {
+    if (!session || session.running) return;
+    session.running = true;
+    $("camGo").hidden = true; $("thumbs").hidden = session.list.length < 2; camMsg("");
+    drawThumbs();
+    var sec = parseInt(cur.timer, 10) || 3, chain = Promise.resolve(true);
+    session.list.forEach(function (i, k) {
+      chain = chain.then(function (ok) {
+        if (!ok || session.aborted) return false;
+        session.current = i; placeGuide();
+        $("camStep").textContent = session.list.length === 1 ? "¡Sonrían!" : "Foto " + (k + 1) + " de " + session.list.length;
+        return countdown(k === 0 ? sec : Math.min(sec, 3)).then(function (go) {
+          if (!go || session.aborted) return false;
+          shots[i] = captureFrame(i);
+          var f = $("flash"); f.classList.remove("on"); void f.offsetWidth; f.classList.add("on");
+          drawThumbs();
+          return sleep(k < session.list.length - 1 ? 1300 : 900).then(function () { return true; });
+        });
+      });
+    });
+    chain.then(function (ok) {
+      if (!session || session.aborted) return;
+      closeCam();
+      var ne = nextEmpty();
+      say(ne < 0 ? "¡Lista! Toca Guardar o imprimir." : "Falta la foto " + (ne + 1) + ".");
+    });
+  }
+  function startSession(list) {
+    if (!list) { list = []; for (var i = 0; i < N; i++) if (!shots[i]) list.push(i); }
+    if (!list.length) return;
+    openCam(list);
+  }
+  $("camGo").addEventListener("click", runSession);
+  $("camClose").addEventListener("click", closeCam);
+  $("camFlip").addEventListener("click", function () {
+    facing = facing === "user" ? "environment" : "user";
+    startStream().catch(function () { camMsg("Este equipo no tiene otra cámara."); facing = facing === "user" ? "environment" : "user"; startStream().catch(function () {}); });
+  });
+  document.addEventListener("keydown", function (e) {
+    if ($("cam").hidden) return;
+    if (e.key === "Escape") closeCam();
+    else if ((e.key === " " || e.key === "Enter") && !session.running) { e.preventDefault(); runSession(); }
+  });
+
+  /* ---------- guardar proyectos ---------- */
+  var CACHE_KEY = "lacabinita-proyectos", CUR_KEY = "lacabinita-actual";
+  function cacheProjects() { lsSet(CACHE_KEY, JSON.stringify(projects)); }
+  function readCache() { try { var a = JSON.parse(lsGet(CACHE_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+
+  function localStore() {
+    return {
+      kind: "local",
+      start: function (onList) {
+        var list = readCache();
+        if (!list.length) {
+          list = ["boda", "bautizo", "navidad", "finde", "cumple"].map(function (ev, i) {
+            var p = defaults(ev); p.id = "p-" + ev; p.orden = i + 1;
+            if (ev === "boda") p.name = "Boda Sebas & Majo";
+            if (ev === "navidad") p.name = "Navidad " + now.getFullYear();
+            if (ev === "finde") p.name = "Fin de año " + now.getFullYear();
+            return p;
+          });
+          lsSet(CACHE_KEY, JSON.stringify(list));
+        }
+        onList(list, true);
+      },
+      save: function (p) { cacheProjects(); return Promise.resolve(); },
+      remove: function (id) { cacheProjects(); return Promise.resolve(); }
+    };
+  }
+  var dirty = false, saveTimer = null;
+  function currentProject() { for (var i = 0; i < projects.length; i++) if (projects[i].id === curId) return projects[i]; return null; }
+  function scheduleSave() {
+    var p = currentProject(); if (!p) return;
+    FIELDS.forEach(function (k) { p[k] = cur[k]; });
+    cacheProjects();
+    dirty = true;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flushSave, 900);
+  }
+  function flushSave() {
+    var p = currentProject(); if (!p || !store) { dirty = false; return; }
+    var snapshot = JSON.stringify(cur);
+    store.save(p).then(function () {
+      if (JSON.stringify(cur) === snapshot) dirty = false;
+      if (store.kind === "db") syncNote("Guardado.");
+      setTimeout(function () { if ($("sync").textContent === "Guardado.") syncNote(""); }, 1500);
+    }).catch(function (err) {
+      dirty = false;
+      syncNote(err && err.code === "quota_exceeded" ? "No hay espacio para guardar más. Elimina un proyecto." : "No se pudo guardar en la nube; quedó en este equipo.");
+    });
+  }
+
+  function fillProjSelect() {
+    var sel = $("projSel"); sel.textContent = "";
+    projects.forEach(function (p) {
+      var o = document.createElement("option"); o.value = p.id; o.textContent = p.name || "Sin nombre"; sel.appendChild(o);
+    });
+    if (curId) sel.value = curId;
+  }
+  function openProject(id, keepShots) {
+    var p = null;
+    for (var i = 0; i < projects.length; i++) if (projects[i].id === id) p = projects[i];
+    if (!p) return;
+    curId = id; lsSet(CUR_KEY, id);
+    cur = clean(p); setLayout(cur.format);
+    $("projName").value = cur.name; $("caption").value = cur.caption; $("sub").value = cur.sub;
+    if (!keepShots) clearShots();
+    bgKey = ""; disarmDelete();
+    renderTemplates(); fillProjSelect(); loadTemplate(); render();
+    warmEvent(cur.event);
+  }
+  function onList(list, confirmed) {
+    projects = list.slice().sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
+    cacheProjects();
+    if (!projects.length) { createProject("boda", "Proyecto nuevo"); return; }
+    var p = currentProject();
+    if (!p) {
+      var want = lsGet(CUR_KEY), found = projects.filter(function (x) { return x.id === want; })[0];
+      openProject((found || projects[0]).id, true);
+    } else if (!dirty) {
+      var fresh = clean(p);
+      if (JSON.stringify(fresh) !== JSON.stringify(cur)) {
+        cur = fresh; setLayout(cur.format);
+        if (document.activeElement !== $("projName")) $("projName").value = cur.name;
+        if (document.activeElement !== $("caption")) $("caption").value = cur.caption;
+        if (document.activeElement !== $("sub")) $("sub").value = cur.sub;
+        renderTemplates(); loadTemplate(); render();
+      }
+    }
+    fillProjSelect();
+  }
+  function createProject(ev, name) {
+    var p = defaults(ev || cur.event || "boda");
+    if (name) p.name = name;
+    p.id = "p-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    p.orden = projects.reduce(function (m, x) { return Math.max(m, x.orden || 0); }, 0) + 1;
+    projects.push(p);
+    openProject(p.id);
+    if (store) store.save(p).catch(function () { syncNote("No se pudo guardar en la nube; quedó en este equipo."); });
+    $("custom").open = true;
+    setTimeout(function () { $("projName").focus(); $("projName").select(); }, 50);
+  }
+
+  /* ---------- controles ---------- */
+  FRAMES.forEach(function (f) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "sw"; b.dataset.v = f.v; b.style.background = f.v;
+    b.setAttribute("aria-label", "Marco " + f.name.toLowerCase()); b.setAttribute("aria-pressed", "false");
+    $("frames").appendChild(b);
+  });
+  function group(id, key) {
+    $(id).addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      cur[key] = b.dataset.v; say(""); scheduleSave(); render();
+    });
+  }
+  group("filters", "filter"); group("frames", "frame"); group("fonts", "font"); group("copies", "copies"); group("timers", "timer"); group("cams", "cam");
+  $("tpls").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    cur.template = b.dataset.v; scheduleSave(); loadTemplate(); render();
+  });
+  $("events").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    var ev = b.dataset.v, d = defaults(ev);
+    cur.event = ev; cur.template = d.template; cur.caption = d.caption; cur.sub = d.sub; cur.font = d.font; cur.frame = d.frame;
+    $("caption").value = cur.caption; $("sub").value = cur.sub;
+    showAll = false; scheduleSave(); renderTemplates(); loadTemplate(); render();
+  });
+  $("formats").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b || b.dataset.v === cur.format) return;
+    cur.format = b.dataset.v; setLayout(cur.format); say("");
+    scheduleSave(); renderTemplates(); loadTemplate(); render();
+  });
+  $("allTpls").addEventListener("click", function () { showAll = !showAll; renderTemplates(); });
+  $("caption").addEventListener("input", function (e) { cur.caption = e.target.value; scheduleSave(); render(); });
+  $("sub").addEventListener("input", function (e) { cur.sub = e.target.value; scheduleSave(); render(); });
+  $("projName").addEventListener("input", function (e) { cur.name = e.target.value; scheduleSave(); var o = $("projSel").selectedOptions[0]; if (o) o.textContent = cur.name || "Sin nombre"; });
+  $("projSel").addEventListener("change", function (e) { if (dirty) { clearTimeout(saveTimer); flushSave(); } openProject(e.target.value); });
+  $("newProj").addEventListener("click", function () { if (dirty) { clearTimeout(saveTimer); flushSave(); } createProject(cur.event, "Proyecto nuevo"); });
+
+  var armTimer = null;
+  function disarmDelete() { clearTimeout(armTimer); $("delProj").classList.remove("armed"); $("delProj").textContent = "Eliminar este proyecto"; }
+  $("delProj").addEventListener("click", function () {
+    var b = $("delProj");
+    if (!b.classList.contains("armed")) {
+      b.classList.add("armed"); b.textContent = "Toca otra vez para eliminar «" + (cur.name || "Sin nombre") + "»";
+      armTimer = setTimeout(disarmDelete, 4000); return;
+    }
+    disarmDelete();
+    var id = curId; clearTimeout(saveTimer); dirty = false;
+    projects = projects.filter(function (p) { return p.id !== id; });
+    lsDel("lacabinita-bg-" + id);
+    curId = null;
+    if (store) store.remove(id).catch(function () { syncNote("No se pudo eliminar en la nube. Intenta de nuevo con conexión."); });
+    if (projects.length) openProject(projects[0].id); else createProject("boda", "Proyecto nuevo");
+    say("Proyecto eliminado.");
+  });
+
+  /* ---------- plantilla propia ---------- */
+  $("bgPick").addEventListener("click", function () { $("bgInput").value = ""; $("bgInput").click(); });
+  $("bgInput").addEventListener("change", function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    say("Preparando plantilla…");
+    loadImage(file).then(function (r) {
+      var a = analyse(r.img); r.done();
+      a.canvas.toBlob(function (blob) {
+        keepLocal(a);
+      }, "image/jpeg", 0.9);
+    }).catch(function () { say("No se pudo leer esa imagen. Usa un JPG o PNG."); });
+  });
+  function keepLocal(a) {
+    var data = a.canvas.toDataURL("image/jpeg", 0.85);
+    var ok = lsSet("lacabinita-bg-" + curId, data);
+    bgCache[data] = a;
+    cur.template = "local"; scheduleSave(); renderTemplates(); bgKey = ""; loadTemplate(); render();
+    say(ok ? "Plantilla guardada solo en este equipo." : "Plantilla puesta, pero no se pudo guardar: súbela otra vez si recargas.");
+  }
+
+  /* ---------- guardar / imprimir ---------- */
+  function sheet() {
+    if (cur.format !== "tira" || cur.copies !== "2") return canvas;
+    var c = document.createElement("canvas");
+    c.width = W * 2; c.height = H;
+    var x = c.getContext("2d");
+    x.drawImage(canvas, 0, 0); x.drawImage(canvas, W, 0);
+    return c;
+  }
+  function fileName() {
+    var d = new Date(), p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return "lacabinita-" + d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "-" + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()) + ".jpg";
+  }
+  /* Safari solo abre el menú de compartir justo después del toque, así que la imagen se prepara antes. */
+  var ready = null, readyTimer = null;
+  function prepareSheet() {
+    ready = null; clearTimeout(readyTimer);
+    if (nextEmpty() >= 0) return;
+    readyTimer = setTimeout(function () {
+      var stamp = renderStamp;
+      try {
+        sheet().toBlob(function (blob) { if (blob && stamp === renderStamp) ready = { blob: blob, name: fileName() }; }, "image/jpeg", 0.93);
+      } catch (e) {}
+    }, 250);
+  }
+  function showAsImage(blob, msg) {
+    if (lastUrl) URL.revokeObjectURL(lastUrl);
+    lastUrl = URL.createObjectURL(blob);
+    stripImg.src = lastUrl; stripImg.hidden = false; canvas.hidden = true;
+    $("hint").textContent = "Mantén presionada la imagen y elige Guardar en Fotos o Imprimir.";
+    say(msg);
+  }
+  function downloadBlob(blob, name) {
+    var a = document.createElement("a"), url = URL.createObjectURL(blob);
+    a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 4000);
+  }
+  $("save").addEventListener("click", function () {
+    if (!ready) { say("Preparando la imagen… toca otra vez en un segundo."); prepareSheet(); return; }
+    var file = null;
+    try { file = new File([ready.blob], ready.name, { type: "image/jpeg" }); } catch (e) {}
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: "La Cabinita" }).then(function () {
+        say("Listo. Si quieres otra copia, toca Guardar o imprimir de nuevo.");
+      }).catch(function (err) {
+        if (err && err.name === "AbortError") { say(""); return; }
+        showAsImage(ready.blob, "Mantén presionada la imagen para guardarla o imprimirla.");
+      });
+    } else if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      showAsImage(ready.blob, "Mantén presionada la imagen para guardarla o imprimirla.");
+    } else {
+      downloadBlob(ready.blob, ready.name); say("Imagen descargada.");
+    }
+  });
+
+  /* ---------- sin señal ---------- */
+  function allTemplateUrls() {
+    var urls = [];
+    Object.keys(LAYOUTS).forEach(function (f) { Object.keys(TEMPLATES).forEach(function (ev) { TEMPLATES[ev].forEach(function (t) { urls.push("plantillas/" + f + "/" + t[0] + ".jpg"); }); }); });
+    return urls;
+  }
+  function warmEvent(ev) {
+    (TEMPLATES[ev] || []).forEach(function (t) { Object.keys(LAYOUTS).forEach(function (f) { fetch("plantillas/" + f + "/" + t[0] + ".jpg").catch(function () {}); }); });
+  }
+  $("offline").addEventListener("click", function () {
+    var urls = allTemplateUrls(), done = 0, fail = 0, btn = $("offline");
+    btn.disabled = true;
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+    var queue = urls.slice(), workers = [];
+    function next() {
+      var u = queue.shift(); if (!u) return Promise.resolve();
+      return fetch(u).then(function (r) { if (!r.ok) fail++; }).catch(function () { fail++; }).then(function () {
+        done++; $("offlineNote").textContent = "Descargando plantillas: " + done + " de " + urls.length + "…"; return next();
+      });
+    }
+    for (var i = 0; i < 4; i++) workers.push(next());
+    Promise.all(workers).then(function () {
+      btn.disabled = false;
+      $("offlineNote").textContent = fail ? "Faltaron " + fail + " plantillas. Revisa la conexión y toca otra vez." : "Listo: La Cabinita ya funciona sin internet en este equipo.";
+    });
+  });
+
+  /* ---------- arranque ---------- */
+  var cached = readCache();
+  if (cached.length) {
+    projects = cached.map(function (p) { var o = clean(p); o.id = p.id; o.orden = p.orden || 0; return o; });
+    var want = lsGet(CUR_KEY), found = projects.filter(function (x) { return x.id === want; })[0];
+    openProject((found || projects[0]).id, true);
+  } else {
+    renderTemplates(); render();
+  }
+
+  store = localStore();
+  store.start(onList);
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  }
+
+  if (document.fonts && document.fonts.load) {
+    Promise.all([
+      document.fonts.load("400 96px 'Bagel Fat One'"), document.fonts.load("400 96px 'Great Vibes'"),
+      document.fonts.load("italic 600 96px 'Playfair Display'"), document.fonts.load("600 40px Figtree"), document.fonts.load("700 40px Figtree")
+    ]).then(render).catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>
